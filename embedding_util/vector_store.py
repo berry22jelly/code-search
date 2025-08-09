@@ -1,11 +1,11 @@
-from src.config import EMBEDDING_MODEL,OPENAI_API_KEY,BASE_URL
+from embedding_util.config import EMBEDDING_MODEL,OPENAI_API_KEY,BASE_URL
 from openai import OpenAI
 import uuid
 
 client = OpenAI(api_key=OPENAI_API_KEY,base_url=BASE_URL)
 import chromadb
 from chromadb.utils import embedding_functions
-from src.config import EMBEDDING_MODEL, OPENAI_API_KEY, BASE_URL
+from embedding_util.config import EMBEDDING_MODEL, OPENAI_API_KEY, BASE_URL
 import uuid
 import chromadb.utils.embedding_functions as embedding_functions
 

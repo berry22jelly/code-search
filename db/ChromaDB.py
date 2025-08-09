@@ -1,5 +1,5 @@
 from symbol.symbols import format_signature
-from src.vector_store import insert_symbol
+from embedding_util.vector_store import insert_symbol
 
 def store_symbol(symbol_info: dict,symbol_name:str,):
     """

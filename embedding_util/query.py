@@ -1,5 +1,5 @@
 from pymilvus import Collection
-from src.vector_store import embed_text, collection_name
+from embedding_util.vector_store import embed_text, collection_name
 
 def search_symbols(query_text, top_k=3):
     #vec = embed_text(query_text)
