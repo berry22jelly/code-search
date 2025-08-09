@@ -1,0 +1,9 @@
+playground
+
+.env
+
+symbol_store.db
+
+**.db
+
+__pycache__
