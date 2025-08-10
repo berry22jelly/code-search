@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 import tkinter as tk
-from tkinter import ttk, scrolledtext, filedialog
+from tkinter import ttk, scrolledtext, filedialog, messagebox
 from typing import Optional
 from ui.functions.doc_function import analyze_and_export_symbols
 from ui.core.IPanel import IPanel
-import tkinter as tk
-from tkinter import ttk, filedialog
-from typing import Optional
+from ui.locale.zh_CN import LOCALE
 
 class SymbolAnalyzerPanel(IPanel):
     """符号分析器面板，用于展示代码符号分析结果"""
@@ -19,7 +17,8 @@ class SymbolAnalyzerPanel(IPanel):
         """
         self.master = master
         self._directory_path: Optional[str] = None
-        self._file_pattern: str = "*.py"  # 默认文件模式
+        self._file_pattern: str = LOCALE["SYMBOL_ANALYZER"]["DEFAULT_FILE_PATTERN"]
+        self.locale = LOCALE["SYMBOL_ANALYZER"]
         
         # 创建主框架
         self.frame = ttk.Frame(master, padding="10")
@@ -45,13 +44,13 @@ class SymbolAnalyzerPanel(IPanel):
         dir_frame = ttk.Frame(control_frame)
         dir_frame.pack(side=tk.LEFT, expand=True, fill=tk.X)
         
-        ttk.Label(dir_frame, text="目标目录:").pack(side=tk.LEFT)
+        ttk.Label(dir_frame, text=self.locale["LABEL_TARGET_DIRECTORY"]).pack(side=tk.LEFT)
         self.dir_entry = ttk.Entry(dir_frame)
         self.dir_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5)
         
         dir_btn = ttk.Button(
             dir_frame, 
-            text="浏览...", 
+            text=self.locale["BUTTON_BROWSE"], 
             command=self._select_directory
         )
         dir_btn.pack(side=tk.LEFT)
@@ -60,7 +59,7 @@ class SymbolAnalyzerPanel(IPanel):
         pattern_frame = ttk.Frame(control_frame)
         pattern_frame.pack(side=tk.LEFT, padx=10)
         
-        ttk.Label(pattern_frame, text="文件模式:").pack(side=tk.LEFT)
+        ttk.Label(pattern_frame, text=self.locale["LABEL_FILE_PATTERN"]).pack(side=tk.LEFT)
         self.pattern_entry = ttk.Entry(pattern_frame, width=15)
         self.pattern_entry.insert(0, self._file_pattern)
         self.pattern_entry.pack(side=tk.LEFT, padx=5)
@@ -68,7 +67,7 @@ class SymbolAnalyzerPanel(IPanel):
         # 分析按钮
         analyze_btn = ttk.Button(
             control_frame,
-            text="分析符号",
+            text=self.locale["BUTTON_ANALYZE_SYMBOLS"],
             command=self._analyze_symbols
         )
         analyze_btn.pack(side=tk.RIGHT)
@@ -86,13 +85,11 @@ class SymbolAnalyzerPanel(IPanel):
             result_frame,
             wrap=tk.WORD,
             yscrollcommand=scrollbar.set,
-            font=('Consolas', 10)  # 使用等宽字体更好看
+            font=('Consolas', 10)
         )
         self.result_text.pack(expand=True, fill=tk.BOTH)
         
         scrollbar.config(command=self.result_text.yview)
-        
-        # 禁用文本框的编辑功能
         self.result_text.config(state=tk.DISABLED)
     
     def _select_directory(self):
@@ -106,23 +103,27 @@ class SymbolAnalyzerPanel(IPanel):
     def _analyze_symbols(self):
         """分析符号并显示结果"""
         if not self._directory_path:
-            tk.messagebox.showerror("错误", "请先选择目录")
+            messagebox.showerror(
+                self.locale["TITLE_ERROR"],
+                self.locale["MESSAGE_NO_DIRECTORY_SELECTED"]
+            )
             return
             
         # 获取用户输入的文件模式
         self._file_pattern = self.pattern_entry.get().strip()
         if not self._file_pattern:
-            self._file_pattern = "*"  # 默认匹配所有文件
+            self._file_pattern = self.locale["DEFAULT_FILE_PATTERN"]
             
         try:
-            # 调用分析函数，传入文件模式
             result = analyze_and_export_symbols(self._directory_path, self._file_pattern)
             
-            # 更新文本框
             self.result_text.config(state=tk.NORMAL)
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, result)
             self.result_text.config(state=tk.DISABLED)
             
         except Exception as e:
-            tk.messagebox.showerror("分析错误", f"分析过程中发生错误:\n{str(e)}")
+            messagebox.showerror(
+                self.locale["TITLE_ANALYSIS_ERROR"],
+                self.locale["MESSAGE_ANALYSIS_ERROR"].format(str(e))
+            )
