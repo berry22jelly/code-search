@@ -1,6 +1,6 @@
 # Code Symbol Analysis Toolkit
 
-## English Version
+Enhance vibe coding by providing symbols.
 
 ### Overview
 This toolkit provides comprehensive code symbol extraction, analysis, and storage capabilities for Python projects. It parses source code to extract symbols (functions, classes, variables) along with their documentation, signatures, and relationships, then stores them in both SQLite and vector databases for efficient querying.
