@@ -4,8 +4,8 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 from typing import Optional
 from ui.functions.doc_function import analyze_and_export_symbols
 from ui.core.IPanel import IPanel
-from ui.locale.zh_CN import LOCALE
-
+import ui.core.i18n as i18n 
+LOCALE=None
 class SymbolAnalyzerPanel(IPanel):
     """符号分析器面板，用于展示代码符号分析结果"""
     
@@ -15,6 +15,8 @@ class SymbolAnalyzerPanel(IPanel):
         参数:
             master (tk.Widget): 父容器部件
         """
+        global LOCALE
+        LOCALE=i18n.display_dict
         self.master = master
         self._directory_path: Optional[str] = None
         self._file_pattern: str = LOCALE["SYMBOL_ANALYZER"]["DEFAULT_FILE_PATTERN"]

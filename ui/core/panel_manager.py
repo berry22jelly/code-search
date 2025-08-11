@@ -39,6 +39,7 @@ class PanelManager:
                         break
             except Exception as e:
                 print(f"Error loading panel {module_name}: {e} \n {e.args}")
+                raise e
     
     def get_panel_names(self):
         """获取所有面板名称"""
