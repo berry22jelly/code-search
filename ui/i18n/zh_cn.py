@@ -41,6 +41,31 @@ ui = {
         "MESSAGE_NO_DIRECTORY_SELECTED": "请先选择目录",
         "TITLE_ANALYSIS_ERROR": "分析错误",
         "MESSAGE_ANALYSIS_ERROR": "分析过程中发生错误:\n{0}"
-    }
+    },
+    "SEARCH_PANEL": {
+            'search': "搜索",
+            'text_search': "文本搜索",
+            'semantic_search': "语义搜索",
+            'name': "名称",
+            'type': "类型",
+            'location': "位置",
+            'documentation': "文档",
+            'prompt': "提示",
+            'empty_query': "请输入搜索内容",
+            'error': "错误",
+            'search_error': "搜索失败: {error}",
+            'details': {
+                'name': "名称",
+                'type': "类型",
+                'location': "位置",
+                'line': "行号",
+                'documentation': "\n文档:",
+                'no_doc': "无文档字符串",
+                'members': "\n成员列表:",
+            },
+            'messages': {
+                'class_members': "{name} ({type})"
+            }
+        }
 }
 

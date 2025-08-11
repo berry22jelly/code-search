@@ -1,21 +1,26 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from db.sqlite import SymbolDatabase
-
 from embedding_util.vector_store import query_symbols
 from ui.core.IPanel import IPanel
 from typing import List, Dict, Any
+import ui.core.i18n as i18n 
+
+locale=i18n.display_dict.get("SEARCH_PANEL")
 
 class SearchPanel(IPanel):
     def __init__(self, master):
         super().__init__(master)
-        self.master=master
+        self.master = master
         self.db = SymbolDatabase('symbols.db')  # 使用默认数据库路径
         self.frame = ttk.Frame(self.master)
         self.current_results = []
+        
+        # 国际化字符串字典
+        self.i18n = locale
+        
         self.create_widgets()
         self.setup_layout()
-        
 
     def create_widgets(self):
         """创建所有UI组件"""
@@ -31,7 +36,7 @@ class SearchPanel(IPanel):
         
         self.search_button = ttk.Button(
             self.search_frame,
-            text="搜索",
+            text=self.i18n['search'],
             command=self.do_search
         )
         
@@ -39,13 +44,13 @@ class SearchPanel(IPanel):
         self.search_type = tk.StringVar(value="text")
         self.text_search_radio = ttk.Radiobutton(
             self.search_frame,
-            text="文本搜索",
+            text=self.i18n['text_search'],
             variable=self.search_type,
             value="text"
         )
         self.semantic_search_radio = ttk.Radiobutton(
             self.search_frame,
-            text="语义搜索",
+            text=self.i18n['semantic_search'],
             variable=self.search_type,
             value="semantic"
         )
@@ -57,9 +62,9 @@ class SearchPanel(IPanel):
             selectmode='browse',
             height=15
         )
-        self.result_tree.heading('#0', text='名称')
-        self.result_tree.heading('type', text='类型')
-        self.result_tree.heading('location', text='位置')
+        self.result_tree.heading('#0', text=self.i18n['name'])
+        self.result_tree.heading('type', text=self.i18n['type'])
+        self.result_tree.heading('location', text=self.i18n['location'])
         self.result_tree.column('type', width=100)
         self.result_tree.column('location', width=200)
         
@@ -97,7 +102,10 @@ class SearchPanel(IPanel):
         """执行搜索操作"""
         query = self.search_var.get().strip()
         if not query:
-            messagebox.showwarning("提示", "请输入搜索内容")
+            messagebox.showwarning(
+                self.i18n['prompt'], 
+                self.i18n['empty_query']
+            )
             return
         
         try:
@@ -110,8 +118,10 @@ class SearchPanel(IPanel):
             
             self.display_results()
         except Exception as e:
-            messagebox.showerror("搜索错误", f"搜索失败: {str(e)}")
-            raise e
+            messagebox.showerror(
+                self.i18n['error'], 
+                self.i18n['search_error'].format(error=str(e))
+            )
 
     def display_results(self):
         """显示搜索结果"""
@@ -153,14 +163,7 @@ class SearchPanel(IPanel):
             
         item = self.result_tree.item(selected)
         symbol_index = item['text']
-        
-        # # 在结果中查找完整信息
-        # symbol_info = next(
-        #     (s for s in self.current_results 
-        #      if s.get('symbol_name') == symbol_name),
-        #     None
-        # )
-        symbol_info=self.current_results[int(symbol_index)]
+        symbol_info = self.current_results[int(symbol_index)]
         if not symbol_info:
             return
             
@@ -169,26 +172,32 @@ class SearchPanel(IPanel):
         
         # 生成详情信息
         details = [
-            f"名称: {symbol_info.get('symbol_name', 'N/A')}",
-            f"类型: {symbol_info.get('symbol_type', 'N/A')}",
-            f"位置: {symbol_info.get('file_path', 'N/A')}",
-            f"行号: {symbol_info.get('lineno', 'N/A')}",
-            "\n文档:",
-            bytes(symbol_info.get('doc_text', '无文档字符串')).decode() if type(symbol_info.get('doc_text', '无文档字符串')) == bytes else symbol_info.get('doc_text', '无文档字符串')
-
-        ]
-        details_auto= [
-            f"Key: {key}, Value: {symbol_info.get(key, 'N/A')}" for key in symbol_info.keys() if key not in ['symbol_name', 'symbol_type', 'file_path', 'lineno', 'doc_text']
+            f"{self.i18n['details']['name']}: {symbol_info.get('symbol_name', 'N/A')}",
+            f"{self.i18n['details']['type']}: {symbol_info.get('symbol_type', 'N/A')}",
+            f"{self.i18n['details']['location']}: {symbol_info.get('file_path', 'N/A')}",
+            f"{self.i18n['details']['line']}: {symbol_info.get('lineno', 'N/A')}",
+            self.i18n['details']['documentation'],
+            bytes(symbol_info.get('doc_text', self.i18n['details']['no_doc'])).decode() 
+            if isinstance(symbol_info.get('doc_text'), bytes) 
+            else symbol_info.get('doc_text', self.i18n['details']['no_doc'])
         ]
 
+        # 自动添加其他字段
+        details_auto = [
+            f"{key}: {symbol_info.get(key, 'N/A')}" 
+            for key in symbol_info.keys() 
+            if key not in ['symbol_name', 'symbol_type', 'file_path', 'lineno', 'doc_text']
+        ]
         details.extend(details_auto)
 
         # 特殊类型处理
-        if hasattr(symbol_info, 'symbol_type') and symbol_info['symbol_type'] == 'class':
-            details.append("\n成员列表:")
+        if symbol_info.get('symbol_type') == 'class':
+            details.append(self.i18n['details']['members'])
             members = self.db.get_class_members(symbol_info.get('symbol_name', 'N/A'))
-            details.extend([f"- {m['symbol_name']} ({m['symbol_type']})" 
-                          for m in members])
+            for m in members:
+                details.append(
+                    f"- {self.i18n['messages']['class_members'].format(name=m['symbol_name'], type=m['symbol_type'])}"
+                )
         
         self.detail_text.insert(tk.END, '\n'.join(details))
         self.detail_text.config(state='disabled')
