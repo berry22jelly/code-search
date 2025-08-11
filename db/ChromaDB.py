@@ -1,5 +1,5 @@
 from symbol.symbols import format_signature
-from embedding_util.vector_store import insert_symbol
+import embedding_util.vector_store  as vectorDB
 
 def store_symbol(symbol_info: dict,symbol_name:str,):
     """
@@ -25,7 +25,7 @@ def store_symbol(symbol_info: dict,symbol_name:str,):
         return {"status": "fail", "symbol": symbol_info["name"], "type": symbol_info["type"]}
 
     # 调用向量存储插入函数
-    insert_symbol(symbol_info["name"], description)
+    vectorDB.insert_symbol(symbol_info["name"], description)
     
     return {"status": "success", "symbol": symbol_info["name"], "type": symbol_info["type"]}
 

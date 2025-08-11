@@ -92,7 +92,7 @@ class SymbolAnalyzerPanel(IPanel):
         self.result_text.pack(expand=True, fill=tk.BOTH)
         
         scrollbar.config(command=self.result_text.yview)
-        self.result_text.config(state=tk.DISABLED)
+        #self.result_text.config(state=tk.DISABLED)
     
     def _select_directory(self):
         """选择目录"""
@@ -122,7 +122,7 @@ class SymbolAnalyzerPanel(IPanel):
             self.result_text.config(state=tk.NORMAL)
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, result)
-            self.result_text.config(state=tk.DISABLED)
+            #self.result_text.config(state=tk.DISABLED)
             
         except Exception as e:
             messagebox.showerror(

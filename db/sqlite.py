@@ -456,7 +456,7 @@ class SymbolDatabase:
         """
         cursor = self.conn.cursor()
         query = (
-            "SELECT s.symbol_name, s.symbol_type, f.file_path, s.lineno "
+            "SELECT * "
             "FROM symbols s "
             "JOIN files f ON s.file_id = f.id "
             "WHERE s.symbol_name LIKE ?"
@@ -468,7 +468,8 @@ class SymbolDatabase:
             params.append(symbol_type)
             
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns,row)) for row in cursor.fetchall()]
     
     def _get_stale_files(self) -> List[str]:
         """
@@ -522,7 +523,8 @@ class SymbolDatabase:
             "ORDER BY s.lineno",
             (class_name,)
         )
-        return [dict(row) for row in cursor.fetchall()]
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns,row)) for row in cursor.fetchall()]
 
     def get_class_methods(self, class_name: str) -> List[Dict]:
         """获取类的所有方法
@@ -542,7 +544,8 @@ class SymbolDatabase:
             "ORDER BY s.lineno",
             (class_name,)
         )
-        return [dict(row) for row in cursor.fetchall()]
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns,row)) for row in cursor.fetchall()]
 
     def get_class_attributes(self, class_name: str) -> List[Dict]:
         """获取类的所有属性
@@ -562,7 +565,8 @@ class SymbolDatabase:
             "ORDER BY s.lineno",
             (class_name,)
         )
-        return [dict(row) for row in cursor.fetchall()]
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns,row)) for row in cursor.fetchall()]
 
     def get_class_and_members(self, class_name: str) -> Dict:
         """获取类定义及其所有成员信息
