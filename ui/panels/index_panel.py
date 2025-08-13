@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
-from db.ChromaDB import store_symbol
-from db.sqlite import SymbolDatabase
+from ui.functions.vector_store import store_symbol
+from db.Sqlite import SymbolDatabase
 from symbol.file_utils import scan_directory
 from symbol.symbols import find_exported_symbols_with_doc, flatten_class_symbols
-import ui.core.i18n as i18n 
+import ui.core.i18n as i18n
+from ui.functions.config import SYMBOLS_DB_FILE_PATH 
 
 locale=i18n.display_dict.get("INDEXING_PANEL")
 class IndexingPanel:
@@ -181,20 +182,29 @@ class IndexingPanel:
                     symbols = find_exported_symbols_with_doc(file_path, self.include_docs.get())
                     flatten_class_symbols(symbols)
                     
-                    # 存储到数据库
-                    relative_path = Path(file_path).relative_to(dir_path).as_posix()
-                    with SymbolDatabase() as db:
-                        db.upsert_file_symbols(file_path, symbols, relative_path)
-                    
+                    vector_ids=[]
                     # 存储到向量数据库
                     for name, detail in symbols:
-                        store_symbol(detail, name)
+                        result = store_symbol(detail, name)
+                        if result.get("status") == "success":
+                            # 将存储的符号信息添加到向量ID列表
+                            vector_ids.append((name, result["id"]))
+                        else:
+                            print(locale["ERROR_PROCESSING_FILE"].format(
+                                file=file_path, 
+                                error= name
+                            ))
+
+                    # 存储到数据库
+                    relative_path = Path(file_path).relative_to(dir_path).as_posix()
+                    with SymbolDatabase(SYMBOLS_DB_FILE_PATH) as db:
+                        db.upsert_file_symbols(file_path, symbols,vector_ids, relative_path)
                         
                 except Exception as e:
                     # 记录错误但不中断整个索引过程
                     print(locale["ERROR_PROCESSING_FILE"].format(
                         file=file_path, 
-                        error=str(e))
+                        error=str(e.with_traceback(e.args)))
                     )
             
             if self.is_indexing:

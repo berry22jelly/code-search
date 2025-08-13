@@ -1,7 +1,8 @@
 from pathlib import Path
-from db.sqlite import SymbolDatabase
+from db.Sqlite import SymbolDatabase
 from symbol.file_utils import scan_directory
 from symbol.symbols import format_signature
+from ui.functions.config import SYMBOLS_DB_FILE_PATH
 
 def analyze_and_export_symbols(directory_path: str,glob:str="*.py") -> str:
     """
@@ -17,7 +18,7 @@ def analyze_and_export_symbols(directory_path: str,glob:str="*.py") -> str:
     result = []
     
     for name in files:
-        with SymbolDatabase() as symdb:
+        with SymbolDatabase(SYMBOLS_DB_FILE_PATH) as symdb:
             doc = symdb.get_file_symbols(name)
         
         relative_path = Path(name).relative_to(directory_path)

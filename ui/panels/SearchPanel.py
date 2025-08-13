@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from db.sqlite import SymbolDatabase
-from embedding_util.vector_store import query_symbols
+from db.Sqlite import SymbolDatabase
+from ui.functions.search_function import query_symbols
 from ui.core.IPanel import IPanel
 from typing import List, Dict, Any
-import ui.core.i18n as i18n 
+import ui.core.i18n as i18n
+from ui.functions.config import SYMBOLS_DB_FILE_PATH 
 
 locale=i18n.display_dict.get("SEARCH_PANEL")
 
@@ -12,7 +13,7 @@ class SearchPanel(IPanel):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
-        self.db = SymbolDatabase('symbols.db')  # 使用默认数据库路径
+        self.db = SymbolDatabase(SYMBOLS_DB_FILE_PATH)  # 使用默认数据库路径
         self.frame = ttk.Frame(self.master)
         self.current_results = []
         

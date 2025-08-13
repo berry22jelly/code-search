@@ -10,8 +10,12 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 import zlib
 
+defult_db_path = "symbols.db"
+
 class SymbolDatabase:
     """
+    __init__(self, db_path: str )
+
     # 数据库表文档
 
     ## files 表 (文件信息表)
@@ -47,6 +51,7 @@ class SymbolDatabase:
     | bases_json | TEXT |  | 类基类的JSON表示 |
     | members_json | TEXT |  | 类成员的JSON表示 |
     | annotation | TEXT |  | 类型注解 |
+        | vector_store_id | TEXT |  | 向量存储标识符(UUID) |
 
     ### 外键约束
     - `file_id` 外键关联到 `files(id)`，并设置级联删除
@@ -60,8 +65,8 @@ class SymbolDatabase:
     - 存储符号的位置信息（起始行和结束行）
     - 文档字符串和结构化信息（签名、基类、成员）以JSON格式存储
     """
-    def __init__(self, db_path: str = "symbols.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str ):
+        self.db_path = db_path if db_path else defult_db_path
         self.conn = sqlite3.connect(db_path)
         self._create_tables()
     
@@ -94,6 +99,7 @@ class SymbolDatabase:
             bases_json TEXT,
             members_json TEXT,
             annotation TEXT,
+            vector_store_id TEXT,
             compressed BOOLEAN DEFAULT 0,
             FOREIGN KEY(file_id) REFERENCES files(id) on delete cascade,
             UNIQUE(file_id, symbol_name)
@@ -121,16 +127,21 @@ class SymbolDatabase:
         with open(file_path, 'rb') as f:
             return hashlib.md5(f.read()).hexdigest()
     
-    def upsert_file_symbols(self, file_path: str, symbols_info: List[Tuple[str, Dict]],relative_path = None):
+    def upsert_file_symbols(self, file_path: str, symbols_info: List[Tuple[str, Dict]], vector_store_ids: List[Tuple[str, str]] = None, relative_path: str = None):
         """
         更新或插入文件的符号信息
         
         参数:
             file_path: 文件路径
             symbols_info: 符号信息列表，格式为 [(symbol_name, details_dict), ...]
+            vector_store_ids: 向量存储ID列表，格式为 [(symbol_name, vector_store_id), ...]
+            relative_path: 相对路径
         """
         file_path = str(Path(file_path).resolve())
-        file_hash = 'self._calculate_file_hash()'
+        file_hash = 'none'
+        
+        # 将vector_store_ids转换为字典便于查找
+        vector_store_dict = dict(vector_store_ids) if vector_store_ids else {}
         
         cursor = self.conn.cursor()
         
@@ -155,6 +166,9 @@ class SymbolDatabase:
         
         # 插入符号数据
         for symbol_name, details in symbols_info:
+            # 获取当前符号的vector_store_id（如果存在）
+            vector_store_id = vector_store_dict.get(symbol_name)
+            
             # 处理模块文档的特殊情况
             if symbol_name == "__module_doc__":
                 symbol_type = "module_doc"
@@ -183,19 +197,19 @@ class SymbolDatabase:
             
             # 压缩文档文本（如果超过阈值）
             doc_text = doc_text if doc_text else ""
-            compressed = False#len(doc_text) > 1024  # 1KB阈值
-            doc_data =  doc_text.encode('utf-8')
-            #self._compress_text(doc_text) if compressed else
+            compressed = False  # len(doc_text) > 1024  # 1KB阈值
+            doc_data = doc_text.encode('utf-8')
+            
             cursor.execute('''
             INSERT INTO symbols (
                 file_id, symbol_name, symbol_type, lineno, end_lineno,
                 doc_text, signature_json, bases_json, members_json, 
-                annotation, compressed
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                annotation, compressed, vector_store_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 file_id, symbol_name, symbol_type, lineno, end_lineno,
                 doc_data, signature_json, bases_json, members_json,
-                annotation, int(compressed)
+                annotation, int(compressed), vector_store_id
             ))
         
         # 更新文件时间戳
@@ -225,7 +239,7 @@ class SymbolDatabase:
             SELECT s.symbol_name, s.symbol_type, s.lineno, s.end_lineno,
                    s.doc_text, s.compressed, s.signature_json, 
                    s.bases_json, s.members_json, s.annotation,
-                   f.file_path
+                   f.file_path, vector_store_id 
             FROM symbols s
             JOIN files f ON s.file_id = f.id
             WHERE s.symbol_name = ? AND f.file_path = ?
@@ -235,7 +249,7 @@ class SymbolDatabase:
             SELECT s.symbol_name, s.symbol_type, s.lineno, s.end_lineno,
                    s.doc_text, s.compressed, s.signature_json, 
                    s.bases_json, s.members_json, s.annotation,
-                   f.file_path
+                   f.file_path, vector_store_id 
             FROM symbols s
             JOIN files f ON s.file_id = f.id
             WHERE s.symbol_name = ?
@@ -245,7 +259,7 @@ class SymbolDatabase:
         for row in cursor.fetchall():
             (name, sym_type, lineno, end_lineno,
              doc_data, compressed, sig_json, bases_json, 
-             members_json, annotation, file_path) = row
+             members_json, annotation, file_path,vector_store_id) = row
             
             # 处理文档文本
             if doc_data:
@@ -264,7 +278,8 @@ class SymbolDatabase:
                 "end_lineno": end_lineno,
                 "doc": doc_text,
                 "file_path": file_path,
-                "annotation": annotation
+                "annotation": annotation,
+                "vector_store_id": vector_store_id,
             }
             
             # 解析JSON数据
@@ -295,7 +310,7 @@ class SymbolDatabase:
         cursor.execute('''
         SELECT s.symbol_name, s.symbol_type, s.lineno, s.end_lineno,
                s.doc_text, s.compressed, s.signature_json, 
-               s.bases_json, s.members_json, s.annotation
+               s.bases_json, s.members_json, s.annotation, s.vector_store_id
         FROM symbols s
         JOIN files f ON s.file_id = f.id
         WHERE f.file_path = ?
@@ -305,7 +320,7 @@ class SymbolDatabase:
         for row in cursor.fetchall():
             (name, sym_type, lineno, end_lineno,
              doc_data, compressed, sig_json, bases_json, 
-             members_json, annotation) = row
+             members_json, annotation, vector_store_id) = row
             
             # 处理文档文本
             if doc_data:
@@ -323,7 +338,8 @@ class SymbolDatabase:
                 "lineno": lineno,
                 "end_lineno": end_lineno,
                 "doc": doc_text,
-                "annotation": annotation
+                "annotation": annotation,
+                "vector_store_id": vector_store_id
             }
             
             # 解析JSON数据

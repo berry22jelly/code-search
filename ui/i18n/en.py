@@ -41,28 +41,28 @@ ui= {
         "MESSAGE_ANALYSIS_ERROR": "An error occurred during analysis:\n{0}"
     },
     "SEARCH_PANEL": {
-    'search': "Search",
-    'text_search': "Text Search",
-    'semantic_search': "Semantic Search",
-    'name': "Name",
-    'type': "Type",
-    'location': "Location",
-    'documentation': "Documentation",
-    'prompt': "Prompt",
-    'empty_query': "Please enter search content",
-    'error': "Error",
-    'search_error': "Search failed: {error}",
-    'details': {
+        'search': "Search",
+        'text_search': "Text Search",
+        'semantic_search': "Semantic Search",
         'name': "Name",
         'type': "Type",
         'location': "Location",
-        'line': "Line number",
-        'documentation': "\nDocumentation:",
-        'no_doc': "No docstring",
-        'members': "\nMember list:",
-    },
-    'messages': {
-        'class_members': "{name} ({type})"
+        'documentation': "Documentation",
+        'prompt': "Prompt",
+        'empty_query': "Please enter search content",
+        'error': "Error",
+        'search_error': "Search failed: {error}",
+        'details': {
+            'name': "Name",
+            'type': "Type",
+            'location': "Location",
+            'line': "Line number",
+            'documentation': "\nDocumentation:",
+            'no_doc': "No docstring",
+            'members': "\nMember list:",
+        },
+        'messages': {
+            'class_members': "{name} ({type})"
+        }
     }
-}
 }

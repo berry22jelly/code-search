@@ -1,5 +1,6 @@
 from symbol.symbols import format_signature
-import embedding_util.vector_store  as vectorDB
+import db.SymbolVectorStore  as vectorDB
+from ui.functions.config import VECTOR_STORE_PATH
 
 def store_symbol(symbol_info: dict,symbol_name:str,):
     """
@@ -20,16 +21,17 @@ def store_symbol(symbol_info: dict,symbol_name:str,):
     if symbol_name:
         symbol_info["name"]=symbol_name
     # 构建符号的完整描述文本
-    description = build_symbol_description(symbol_info)
+    description = _build_symbol_description(symbol_info)
     if not description:
         return {"status": "fail", "symbol": symbol_info["name"], "type": symbol_info["type"]}
 
     # 调用向量存储插入函数
-    vectorDB.insert_symbol(symbol_info["name"], description)
+    store = vectorDB.SymbolVectorStore(persist_path = VECTOR_STORE_PATH)
+    id=store.insert_symbol(symbol_info["name"], description)
     
-    return {"status": "success", "symbol": symbol_info["name"], "type": symbol_info["type"]}
+    return {"status": "success", "symbol": symbol_info["name"], "type": symbol_info["type"],"id":id}
 
-def build_symbol_description(symbol_info: dict) -> str:
+def _build_symbol_description(symbol_info: dict) -> str:
     """将符号信息转换为描述文本，处理缺失字段"""
     name = symbol_info.get("name", "unnamed_symbol")
     sym_type = symbol_info.get("type", "unknown")
@@ -154,9 +156,9 @@ if __name__ == "__main__":
         }
     }
     class_symbol1["name"]="ttt"
-    print( build_symbol_description(function_symbol))
+    print( _build_symbol_description(function_symbol))
 
-    print( build_symbol_description(class_symbol1))
+    print( _build_symbol_description(class_symbol1))
     # 存储符号
     # store_symbol(function_symbol)
     # store_symbol(class_symbol)
